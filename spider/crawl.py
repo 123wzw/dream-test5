@@ -10,7 +10,7 @@ def crawl(out_path: str = "data/items.jsonl") -> dict:
     total = parse.total_pages(first_html)
 
     collected = parse.parse_items(first_html)
-    for page in range(2, total):
+    for page in range(2, total + 1):
         html = fetch.fetch_page(page)
         collected.extend(parse.parse_items(html))
 

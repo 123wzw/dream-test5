@@ -6,7 +6,7 @@ from html.parser import HTMLParser
 ITEM_RE = re.compile(r'<div class="item".*?</div>', re.S)
 ID_RE = re.compile(r'data-id="([^"]+)"')
 TITLE_RE = re.compile(r'<span class="title">(.*?)</span>', re.S)
-PRICE_TEXT_RE = re.compile(r"¥\s*([0-9]+(?:\.[0-9]+)?)")
+PRICE_RE = re.compile(r'data-price="([^"]+)"')
 TOTAL_RE = re.compile(r"共\s*(\d+)\s*页")
 
 
@@ -38,14 +38,16 @@ def parse_items(html: str) -> list[dict]:
     for block in ITEM_RE.findall(html):
         id_match = ID_RE.search(block)
         title_match = TITLE_RE.search(block)
-        price_match = PRICE_TEXT_RE.search(block)
+        price_match = PRICE_RE.search(block)
         if not (id_match and title_match and price_match):
             continue
         items.append(
             {
                 "id": id_match.group(1),
                 "title": _text_of(title_match.group(1)),
-                "price_cents": int(float(price_match.group(1)) * 100),
+                # 口径 §2：折后价取 data-price，站点给出的就是整数分，直接按整数解析，
+                # 不得抓页面文本里的第一个金额（那是原价），也不得做浮点运算。
+                "price_cents": int(price_match.group(1)),
             }
         )
     return items
